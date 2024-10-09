@@ -11,15 +11,11 @@ class DatabaseHelper:
         url: str,
         echo: bool = False,
         echo_pool: bool = False,
-        pool_size: int = 5,
-        max_overflow: int = 10,
     ):
         self.engine = create_async_engine(
             url=url,
             echo=echo,
             echo_pool=echo_pool,
-            max_overflow=max_overflow,
-            pool_size=pool_size,
         )
         self.session_factory = async_sessionmaker(
             bind=self.engine,

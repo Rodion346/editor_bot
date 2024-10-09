@@ -3,6 +3,7 @@ name = "editor_bot"
 version = "0.1.0"
 description = "Kwork"
 authors = ["Rodion <rodionkireev44@gmail.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "3.11.10"
@@ -12,3 +13,4 @@ black = "^24.8.0"
 pydantic-settings = "^2.5.2"
 sqlalchemy = "^2.0.35"
 alembic = "^1.13.3"
+aiosqlite = "^0.20.0"

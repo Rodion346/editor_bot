@@ -55,8 +55,8 @@ class CreateKeyboard:
         for i in range(0, len(names_tb), row):
             row_buttons = [
                 InlineKeyboardButton(
-                    text=name,
-                    callback_data=f"tb_{name}",
+                    text=name.name,
+                    callback_data=f"tb_{name.name}",
                 )
                 for name in names_tb[i : i + row]
             ]

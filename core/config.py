@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from pydantic import PostgresDsn
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
@@ -10,7 +9,7 @@ load_dotenv()
 
 
 class DatabaseConfig(BaseModel):
-    url: PostgresDsn
+    url: str
 
 
 class Settings(BaseSettings):
