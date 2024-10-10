@@ -92,9 +92,11 @@ class CreateKeyboard:
     @staticmethod
     async def create_ps():
         kb = InlineKeyboardBuilder()
-        btn_weekday = InlineKeyboardButton(text="Будний день", callback_data=f"weekday")
-        btn_weekend = InlineKeyboardButton(text="Выходной", callback_data=f"weekend")
-        btn_event = InlineKeyboardButton(text="Событие", callback_data=f"event")
+        btn_weekday = InlineKeyboardButton(
+            text="Будний день", callback_data=f"ps_weekday"
+        )
+        btn_weekend = InlineKeyboardButton(text="Выходной", callback_data=f"ps_weekend")
+        btn_event = InlineKeyboardButton(text="Событие", callback_data=f"ps_event")
         btn_back = InlineKeyboardButton(text="Назад", callback_data="back_to_main")
 
         kb.row(btn_weekday)

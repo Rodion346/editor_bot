@@ -12,6 +12,14 @@ class BaseRepository:
             query = query.scalars().all()
             return query
 
+    async def select_id(self, entity_id):
+        async with self.db() as session:
+            query = await session.execute(
+                select(self.model).where(self.model.id == entity_id)
+            )
+            query = query.scalars().one()
+            return query
+
     async def select_name(self, name):
         async with self.db() as session:
             query = await session.execute(

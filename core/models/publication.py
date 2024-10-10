@@ -8,9 +8,10 @@ from .base import Base
 class Publication(Base):
     __tablename__ = "publications"
 
-    time: Mapped[datetime] = mapped_column(DateTime)
+    time: Mapped[str] = mapped_column(nullable=False)
     thematic_block_id: Mapped[int] = mapped_column(
         ForeignKey("thematic_blocks.id"), nullable=False
     )
+    today: Mapped[int] = mapped_column(nullable=False)
 
     thematic_block: Mapped["ThematicBlock"] = relationship("ThematicBlock")
