@@ -127,5 +127,101 @@ class CreateKeyboard:
         keyboard = kb.as_markup()
         return keyboard
 
+    @staticmethod
+    async def create_adm_list(adm_list):
+        k_b = InlineKeyboardBuilder()
+        for i in range(0, len(adm_list), 1):
+            row_buttons = [
+                InlineKeyboardButton(
+                    text=f"id {adm.admin_id}",
+                    callback_data=f"ad_{adm.admin_id}",
+                )
+                for adm in adm_list[i : i + 1]
+            ]
+            k_b.row(*row_buttons)
+
+        k_b.row(InlineKeyboardButton(text="Назад", callback_data="administration"))
+        keyboard = k_b.as_markup()
+        return keyboard
+
+    @staticmethod
+    async def create_rights(adm):
+        kb = InlineKeyboardBuilder()
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Добавить ТБ || {'Есть' if adm.add_tb is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.add_tb}_{adm.admin_id}_add_tb",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Редактировать ТБ || {'Есть' if adm.edit_tb is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.edit_tb}_{adm.admin_id}_add_tb",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Удалить ТБ || {'Есть' if adm.del_tb is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.del_tb}_{adm.admin_id}_del_tb",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Добавить время || {'Есть' if adm.add_time is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.add_time}_{adm.admin_id}_add_time",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Редактировать время || {'Есть' if adm.edit_time is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.edit_time}_{adm.admin_id}_edit_time",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Удалить время || {'Есть' if adm.del_time is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.del_time}_{adm.admin_id}_del_time",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Добавить источники || {'Есть' if adm.add_source is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.add_source}_{adm.admin_id}_add_source",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Редактировать источники || {'Есть' if adm.edit_source is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.edit_source}_{adm.admin_id}_edit_source",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Удалить источники || {'Есть' if adm.del_source is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.del_source}_{adm.admin_id}_del_source",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Рерайт || {'Есть' if adm.rerate is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.rerate}_{adm.admin_id}_rerate",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"Комментарии || {'Есть' if adm.comments is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.comments}_{adm.admin_id}_comments",
+            )
+        )
+        kb.row(
+            InlineKeyboardButton(
+                text=f"События || {'Есть' if adm.event is True else 'Нет'}",
+                callback_data=f"show_redact_{adm.event}_{adm.admin_id}_event",
+            )
+        )
+        kb.row(InlineKeyboardButton(text="Назад", callback_data="admin_list"))
+
+        return kb.as_markup()
+
 
 create_kb = CreateKeyboard()

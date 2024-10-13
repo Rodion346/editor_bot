@@ -18,27 +18,14 @@ class ThematicBlockRepository(BaseRepository):
 
     async def update(self, name: str, column: str, new_value: str):
         async with self.db() as session:
-            if column == "name":
-                stmt = (
-                    update(self.model)
-                    .where(self.model.name == name)
-                    .values(name=new_value)
-                )
-
-            elif column == "source":
-                stmt = (
-                    update(self.model)
-                    .where(self.model.name == name)
-                    .values(source=new_value)
-                )
-            elif column == "description":
-                stmt = (
-                    update(self.model)
-                    .where(self.model.name == name)
-                    .values(description=new_value)
-                )
-            else:
+            if column not in ["name", "source", "description"]:
                 return "Not"
+
+            stmt = (
+                update(self.model)
+                .where(self.model.name == name)
+                .values({column: new_value})
+            )
 
             await session.execute(stmt)
             await session.commit()

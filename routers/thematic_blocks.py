@@ -1,12 +1,8 @@
-from pkgutil import get_data
-
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiohttp.web_middlewares import middleware
-from tomlkit import value
 
 from utils.create_keyboard import create_kb
 from core.repositories.thematic_block import ThematicBlockRepository
@@ -72,10 +68,14 @@ async def description_block(message: Message, state: FSMContext):
 
 @thematic_blocks_router.message(CreateBlock.description)
 async def description_block(message: Message, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(text="Назад", callback_data="thematic_blocks"))
     await state.update_data(description=message.text)
     data = await state.get_data()
     await repo.add(data.get("name"), data.get("source"), data.get("description"))
-    await message.answer(f"ТБ: {data.get('name')}\nУспешно создан")
+    await message.answer(
+        f"ТБ: {data.get('name')}\nУспешно создан", reply_markup=kb.as_markup()
+    )
     await state.clear()
 
 

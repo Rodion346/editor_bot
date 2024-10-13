@@ -85,8 +85,13 @@ async def publication_data(message: Message, state: FSMContext):
 
 @publication_schedule_router.message(AddTime.tb)
 async def publication_data(message: Message, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(text="Назад", callback_data="publication_schedule"))
     await state.update_data(tb=message.text)
     data = await state.get_data()
     await state.clear()
     await repo.add(data.get("time"), data.get("tb"), AddTime.today)
-    await message.answer("OK")
+    await message.answer(
+        f"Вы установили ТБ {data.get('tb')} на {data.get('time')}",
+        reply_markup=kb.as_markup(),
+    )

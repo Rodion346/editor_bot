@@ -12,6 +12,10 @@ class DatabaseConfig(BaseModel):
     url: str
 
 
+class AdmConfig(BaseModel):
+    tg_id: str
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -19,6 +23,7 @@ class Settings(BaseSettings):
         env_nested_delimiter="__",
     )
     db: DatabaseConfig
+    su: AdmConfig
 
 
 settings = Settings()
