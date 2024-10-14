@@ -8,5 +8,7 @@ class Event(Base):
     __tablename__ = "events"
 
     name: Mapped[str] = mapped_column(nullable=False)
-    source: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    source: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(nullable=False)
+    time_in: Mapped[str] = mapped_column(nullable=False)
+    time_out: Mapped[str] = mapped_column(nullable=False)

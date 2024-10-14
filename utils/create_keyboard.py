@@ -96,7 +96,7 @@ class CreateKeyboard:
             text="Будний день", callback_data=f"ps_weekday"
         )
         btn_weekend = InlineKeyboardButton(text="Выходной", callback_data=f"ps_weekend")
-        btn_event = InlineKeyboardButton(text="Событие", callback_data=f"ps_event")
+        btn_event = InlineKeyboardButton(text="Событие", callback_data=f"event")
         btn_back = InlineKeyboardButton(text="Назад", callback_data="back_to_main")
 
         kb.row(btn_weekday)
@@ -222,6 +222,36 @@ class CreateKeyboard:
         kb.row(InlineKeyboardButton(text="Назад", callback_data="admin_list"))
 
         return kb.as_markup()
+
+    @staticmethod
+    async def create_ev_individual(name):
+        kb = InlineKeyboardBuilder()
+        btn_change_name = InlineKeyboardButton(
+            text="Изменить название", callback_data=f"evchange_name_{name}"
+        )
+        btn_change_source = InlineKeyboardButton(
+            text="Изменить источник", callback_data=f"evchange_source_{name}"
+        )
+        btn_change_description = InlineKeyboardButton(
+            text="Изменить описание", callback_data=f"evchange_description_{name}"
+        )
+        btn_change_timein = InlineKeyboardButton(
+            text="Изменить время входа", callback_data=f"evchange_time_in_{name}"
+        )
+        btn_change_timeout = InlineKeyboardButton(
+            text="Изменить время выхода", callback_data=f"evchange_time_out_{name}"
+        )
+        btn_back = InlineKeyboardButton(text="Назад", callback_data="list_events")
+
+        kb.row(btn_change_name)
+        kb.row(btn_change_source)
+        kb.row(btn_change_description)
+        kb.row(btn_change_timein)
+        kb.row(btn_change_timeout)
+        kb.row(btn_back)
+
+        keyboard = kb.as_markup()
+        return keyboard
 
 
 create_kb = CreateKeyboard()

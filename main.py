@@ -6,6 +6,7 @@ from aiogram import Dispatcher, Bot
 
 from routers.admin import admin_router
 from routers.command import command_router
+from routers.events import event_router
 from routers.publication_schedule import publication_schedule_router
 from routers.thematic_blocks import thematic_blocks_router
 
@@ -16,6 +17,7 @@ dp.include_router(command_router)
 dp.include_router(thematic_blocks_router)
 dp.include_router(publication_schedule_router)
 dp.include_router(admin_router)
+dp.include_router(event_router)
 
 
 async def main():

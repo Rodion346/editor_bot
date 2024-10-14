@@ -27,13 +27,6 @@ async def publication_schedule_menu(callback_query: CallbackQuery):
     )
 
 
-@publication_schedule_router.callback_query(F.data == "event")
-async def event_menu(callback_query: CallbackQuery):
-    await callback_query.message.edit_text(
-        "События:", reply_markup=await create_kb.create_ps_event()
-    )
-
-
 @publication_schedule_router.callback_query(F.data.startswith("ps_"))
 async def publication_data(callback_query: CallbackQuery):
     kb = InlineKeyboardBuilder()
