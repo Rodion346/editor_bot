@@ -20,6 +20,16 @@ class AddTime(StatesGroup):
     today: int
 
 
+class EditPb(StatesGroup):
+    id: str
+    value = State()
+    column: str
+
+
+class Pub(StatesGroup):
+    id = State()
+
+
 @publication_schedule_router.callback_query(F.data == "publication_schedule")
 async def publication_schedule_menu(callback_query: CallbackQuery):
     await callback_query.message.edit_text(
@@ -28,9 +38,9 @@ async def publication_schedule_menu(callback_query: CallbackQuery):
 
 
 @publication_schedule_router.callback_query(F.data.startswith("ps_"))
-async def publication_data(callback_query: CallbackQuery):
+async def publication_data(callback_query: CallbackQuery, state: FSMContext):
     kb = InlineKeyboardBuilder()
-    text = "Тест\n"
+    text = "Публикации:\n"
     btn_add_time = InlineKeyboardButton(text="Добавить время", callback_data="add_time")
     btn_back = InlineKeyboardButton(text="Назад", callback_data="publication_schedule")
     kb.row(btn_add_time)
@@ -42,18 +52,86 @@ async def publication_data(callback_query: CallbackQuery):
         if list_pb:
             for pb in list_pb:
                 if pb.today < 5:
-                    block = await repo_block.select_id(pb.thematic_block_id)
-                    text += f"{pb.id} - {pb.time} || {block.name}\n"
+                    block = await repo_block.select_id(
+                        str(pb.thematic_block_id).split(",")
+                    )
+                    tx = ""
+                    for i in block:
+                        tx += i.name
+                        tx += ","
+                    text += f"{pb.id} - {pb.time} || {tx.rstrip(',')}\n"
 
     elif data[1] == "weekend":
         AddTime.today = 5
         if list_pb:
             for pb in list_pb:
                 if pb.today > 4:
-                    block = await repo_block.select_id(pb.thematic_block_id)
-                    text += f"{pb.id} - {pb.time} || {block.name}\n"
+                    block = await repo_block.select_id(
+                        str(pb.thematic_block_id).split(",")
+                    )
+                    tx = ""
+                    for i in block:
+                        tx += i.name
+                        tx += ","
+                    text += f"{pb.id} - {pb.time} || {tx.rstrip(',')}\n"
 
-    await callback_query.message.edit_text(text, reply_markup=kb.as_markup())
+    await callback_query.message.edit_text(
+        text + "выберите номер", reply_markup=kb.as_markup()
+    )
+    await state.set_state(Pub.id)
+
+
+@publication_schedule_router.message(Pub.id)
+async def publication_data(message: Message, state: FSMContext):
+    pb = await repo.select_id(message.text)
+    block = await repo_block.select_id(pb.thematic_block_id)
+    kb = InlineKeyboardBuilder()
+    btn_edit_time = InlineKeyboardButton(
+        text="Изменить время", callback_data=f"changepb_edit_time_{message.text}"
+    )
+    btn_edit_tb = InlineKeyboardButton(
+        text="Изменить блок", callback_data=f"changepb_edit_tb_{message.text}"
+    )
+    btn_delete_tb = InlineKeyboardButton(
+        text="Удалить", callback_data=f"changepb_delete_{message.text}"
+    )
+    btn_back = InlineKeyboardButton(text="Назад", callback_data="publication_schedule")
+    kb.add(btn_edit_time)
+    kb.add(btn_edit_tb)
+    kb.add(btn_delete_tb)
+    kb.add(btn_back)
+    await message.answer(
+        f"{pb.id} - {pb.time} || {block.name}\n", reply_markup=kb.as_markup()
+    )
+    await state.clear()
+
+
+@publication_schedule_router.callback_query(F.data.startswith("changepb_"))
+async def publication_data(callback_query: CallbackQuery, state: FSMContext):
+    text = ""
+    data = callback_query.data.split("_")
+    if "delete" not in data:
+        EditPb.column = data[2]
+        EditPb.id = data[3]
+    else:
+        await repo.delete(int(data[2]))
+        await callback_query.message.answer("Удалено")
+    if "tb" in data:
+        list_tb = await repo_block.select_all()
+        for tb in list_tb:
+            text += f"{tb.id} - {tb.name}\n"
+    await callback_query.message.answer(text + "Введите новое значение")
+    await state.set_state(EditPb.value)
+
+
+@publication_schedule_router.message(EditPb.value)
+async def publication_data(message: Message, state: FSMContext):
+    print(EditPb.id)
+    if EditPb.column == "tb":
+        EditPb.column = "thematic_block_id"
+    await repo.update(int(EditPb.id), EditPb.column, message.text)
+    await state.clear()
+    await message.answer("Изменено")
 
 
 @publication_schedule_router.callback_query(F.data.startswith("add_time"))
@@ -72,7 +150,7 @@ async def publication_data(message: Message, state: FSMContext):
             block = await repo_block.select_id(pb.id)
             tb_text += f"{pb.id} - {block.name}\n"
 
-    await message.answer(tb_text + "\nВыберите номер блока:")
+    await message.answer(tb_text + "\nВыберите номер(a) блока(ов):")
     await state.set_state(AddTime.tb)
 
 

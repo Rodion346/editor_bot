@@ -9,7 +9,7 @@ class Publication(Base):
     __tablename__ = "publications"
 
     time: Mapped[str] = mapped_column(nullable=False)
-    thematic_block_id: Mapped[int] = mapped_column(
+    thematic_block_id: Mapped[str] = mapped_column(
         ForeignKey("thematic_blocks.id"), nullable=False
     )
     today: Mapped[int] = mapped_column(nullable=False)
