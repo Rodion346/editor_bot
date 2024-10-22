@@ -15,6 +15,7 @@ repo = EventRepository()
 
 class Event(StatesGroup):
     event = State()
+    edit_name = State()
 
 
 class Change_ev(StatesGroup):
@@ -40,31 +41,110 @@ async def event_menu(callback_query: CallbackQuery):
 
 @event_router.callback_query(F.data == "list_events")
 async def event_list(callback_query: CallbackQuery, state: FSMContext):
-    kb = InlineKeyboardBuilder()
-    kb.row(InlineKeyboardButton(text="Назад", callback_data="event"))
     event_list = await repo.select_all()
-    form_text = ""
-    for event in event_list:
-        form_text += (
-            f"{event.id} - с {event.time_in} по {event.time_out} || {event.name}\n"
+    page = 0  # Начальная страница
+    page_size = 20
+
+    total_pages = (len(event_list) + page_size - 1) // page_size
+    start_idx = page * page_size
+    end_idx = start_idx + page_size
+    current_page_events = event_list[start_idx:end_idx]
+
+    kb = InlineKeyboardBuilder()
+    for event in current_page_events:
+        btn = InlineKeyboardButton(
+            text=f"{event.name}", callback_data=f"select_event_{event.id}"
         )
+        kb.row(btn)
+
+    if total_pages > 1:
+        if page > 0:
+            btn_prev = InlineKeyboardButton(
+                text="<< Назад", callback_data=f"events_{page-1}"
+            )
+            kb.row(btn_prev)
+        if page < total_pages - 1:
+            btn_next = InlineKeyboardButton(
+                text="Вперед >>", callback_data=f"events_{page+1}"
+            )
+            kb.row(btn_next)
+
+    btn_back = InlineKeyboardButton(text="Назад", callback_data="event")
+    kb.row(btn_back)
+
     await callback_query.message.edit_text(
-        "Выберите событие:\n" + form_text, reply_markup=kb.as_markup()
+        "Выберите событие:", reply_markup=kb.as_markup()
     )
     await state.set_state(Event.event)
 
 
-@event_router.message(Event.event)
-async def event(message: Message, state: FSMContext):
-    event = await repo.select_id(message.text)
+@event_router.callback_query(F.data.startswith("events_"))
+async def event_list_pagination(callback_query: CallbackQuery, state: FSMContext):
+    page = int(callback_query.data.split("_")[1])
+    event_list = await repo.select_all()
+    page_size = 20
+
+    total_pages = (len(event_list) + page_size - 1) // page_size
+    start_idx = page * page_size
+    end_idx = start_idx + page_size
+    current_page_events = event_list[start_idx:end_idx]
+
     kb = InlineKeyboardBuilder()
-    kb.add(
-        InlineKeyboardButton(text="Удалить", callback_data="delete_event"),
-        InlineKeyboardButton(text="Изменить", callback_data=f"edit_event_{event.name}"),
+    for event in current_page_events:
+        btn = InlineKeyboardButton(
+            text=f"{event.name}", callback_data=f"select_event_{event.id}"
+        )
+        kb.row(btn)
+
+    if total_pages > 1:
+        if page > 0:
+            btn_prev = InlineKeyboardButton(
+                text="<< Назад", callback_data=f"events_{page-1}"
+            )
+            kb.row(btn_prev)
+        if page < total_pages - 1:
+            btn_next = InlineKeyboardButton(
+                text="Вперед >>", callback_data=f"events_{page+1}"
+            )
+            kb.row(btn_next)
+
+    btn_back = InlineKeyboardButton(text="Назад", callback_data="event")
+    kb.row(btn_back)
+
+    await callback_query.message.edit_text(
+        "Выберите событие:", reply_markup=kb.as_markup()
     )
-    await message.answer(
-        f"С {event.time_in} по {event.time_out} || {event.name}\n",
+    await state.set_state(Event.event)
+
+
+@event_router.callback_query(F.data.startswith("select_event_"))
+async def event_detail(callback_query: CallbackQuery, state: FSMContext):
+    event_id = callback_query.data.split("_")[2]
+    event = await repo.select_id(event_id)
+    kb = InlineKeyboardBuilder()
+    btn_delete = InlineKeyboardButton(
+        text="Удалить", callback_data=f"delete_event_{event_id}"
+    )
+    btn_back = InlineKeyboardButton(text="Назад", callback_data="list_events")
+    kb.row(btn_delete)
+    kb.row(btn_back)
+
+    await callback_query.message.edit_text(
+        f"Событие: {event.name} - с {event.time_in} по {event.time_out}",
         reply_markup=kb.as_markup(),
+    )
+    await state.clear()
+
+
+@event_router.callback_query(F.data.startswith("delete_event_"))
+async def delete_event(callback_query: CallbackQuery, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    event_id = callback_query.data.split("_")[2]
+    await repo.delete(int(event_id))
+    btn_back = InlineKeyboardButton(text="Назад", callback_data="list_events")
+    kb.row(btn_back)
+    await callback_query.message.edit_text(
+        "Событие удалено.", reply_markup=kb.as_markup()
     )
     await state.clear()
 

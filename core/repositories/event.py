@@ -1,6 +1,6 @@
 from os import times
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 
 from core.models.event import Event
 from core.models.db_helper import db_helper
@@ -38,3 +38,9 @@ class EventRepository(BaseRepository):
             await session.execute(stmt)
             await session.commit()
             return stmt
+
+    async def delete(self, ev_id: int):
+        async with self.db() as session:
+            stmt = delete(self.model).where(self.model.id == ev_id)
+            await session.execute(stmt)
+            await session.commit()

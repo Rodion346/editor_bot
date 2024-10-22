@@ -1,3 +1,4 @@
+import os
 from pkgutil import get_data
 
 from aiogram import Router, F
@@ -6,9 +7,11 @@ from aiogram.fsm.state import StatesGroup, State
 
 from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from dotenv import set_key
 from sqlalchemy import True_
 from sqlalchemy.util import await_only
 
+from utils.adm import check_permission, super_adm
 from utils.create_keyboard import create_kb
 from core.repositories.admin import AdminRepository
 
@@ -18,6 +21,20 @@ admin_router = Router()
 
 class Admin(StatesGroup):
     id_adm = State()
+    update_channel_link = State()
+
+
+@check_permission("some_permission_field")
+async def update_channel_link(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    if user_id not in super_adm:
+        await message.answer("У вас нет прав для выполнения этого действия.")
+        return
+
+    new_link = message.text.strip()
+    set_key(".env", "CHANNEL_LINK", new_link)
+    os.environ["CHANNEL_LINK"] = new_link
+    await message.answer(f"Ссылка на канал успешно обновлена: {new_link}")
 
 
 @admin_router.callback_query(F.data == "administration")
@@ -31,6 +48,14 @@ async def admin_menu(callback_query: CallbackQuery):
     kb.row(btn_list)
     kb.row(btn_add_admin)
     kb.row(btn_back)
+
+    user_id = callback_query.from_user.id
+    if user_id in super_adm:
+        btn_update_channel = InlineKeyboardButton(
+            text="Изменить ссылку на канал", callback_data="update_channel_link"
+        )
+        kb.row(btn_update_channel)
+
     await callback_query.message.edit_text("ADMINS", reply_markup=kb.as_markup())
 
 
@@ -126,3 +151,18 @@ async def delete_admin(callback_query: CallbackQuery):
     await callback_query.message.edit_text(
         "Выберите админа:", reply_markup=await create_kb.create_adm_list(adm_list)
     )
+
+
+@admin_router.callback_query(F.data == "update_channel_link")
+async def update_channel_link_prompt(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.message.edit_text("Введите новую ссылку на канал:")
+    await state.set_state(Admin.update_channel_link)
+
+
+@admin_router.message(Admin.update_channel_link)
+async def update_channel_link_handler(message: Message, state: FSMContext):
+    new_link = message.text.strip()
+    set_key(".env", "CHANNEL_LINK", new_link)
+    os.environ["CHANNEL_LINK"] = new_link
+    await message.answer(f"Ссылка на канал успешно обновлена: {new_link}")
+    await state.clear()

@@ -16,7 +16,7 @@ api_hash = "22b6dbdfce28e71ce66911f29ccc5bfe"
 target_chat_id = -1002468380719
 
 
-async def fetch_posts(client, id, minutes=5):
+async def fetch_posts(client, id, minutes=60):
     tb = await repo.select_id(id)
     sources = []
     if isinstance(tb, list):
@@ -96,8 +96,9 @@ async def copy_posts(client, messages, target_chat_id, desc):
 async def main(id):
     client = TelegramClient("session_name", api_id, api_hash)
     await client.start()
-
-    messages = await fetch_posts(client, id)
+    tb = await repo.select_id(id)
+    min = tb.time_back
+    messages = await fetch_posts(client, id, minutes=min)
     await copy_posts(client, messages, target_chat_id, await repo.select_id(id))
 
     await client.disconnect()
