@@ -43,6 +43,7 @@ async def thematic_block(callback_query: CallbackQuery):
     name_tb = await repo.select_name(name_tb)
     form_text += name_tb.name + "\n"
     form_text += f"Источники: {name_tb.source}\n"
+    form_text += f"Время: {name_tb.time_back}\n"
     form_text += f"Описание: {name_tb.description}"
 
     await callback_query.message.edit_text(
@@ -113,10 +114,15 @@ async def create_change_mess(callback_query: CallbackQuery, state: FSMContext):
 @thematic_blocks_router.message(Change.value)
 @check_permission("edit_time")
 async def description_block(message: Message, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(text="Назад", callback_data="thematic_blocks"))
     await state.update_data(value=message.text)
     data = await state.get_data()
     model = Change.model
+    if model[1] == "timeback":
+        model[1] = "time_back"
     print(model)
     q = await repo.update(model[2], model[1], data.get("value"))
-    await message.answer("OK")
+
+    await message.answer("Изменено", reply_markup=kb.as_markup())
     await state.clear()

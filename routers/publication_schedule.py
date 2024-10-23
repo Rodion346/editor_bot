@@ -198,7 +198,11 @@ async def publication_data(message: Message, state: FSMContext):
             )
             kb.row(btn_next)
 
+    btn_done = InlineKeyboardButton(
+        text="Готово", callback_data="done_selecting_blocks"
+    )
     btn_back = InlineKeyboardButton(text="Назад", callback_data="publication_schedule")
+    kb.row(btn_done)
     kb.row(btn_back)
 
     await message.answer("Выберите блок(и):", reply_markup=kb.as_markup())
@@ -236,7 +240,11 @@ async def publication_data(callback_query: CallbackQuery, state: FSMContext):
             )
             kb.row(btn_next)
 
+    btn_done = InlineKeyboardButton(
+        text="Готово", callback_data="done_selecting_blocks"
+    )
     btn_back = InlineKeyboardButton(text="Назад", callback_data="publication_schedule")
+    kb.row(btn_done)
     kb.row(btn_back)
 
     await callback_query.message.edit_text(
@@ -249,16 +257,75 @@ async def publication_data(callback_query: CallbackQuery, state: FSMContext):
 @check_permission("add_time")
 async def publication_data(callback_query: CallbackQuery, state: FSMContext):
     block_id = callback_query.data.split("_")[2]
-    await state.update_data(tb=block_id)
+    current_data = await state.get_data()
+    selected_blocks = current_data.get("selected_blocks", [])
+    selected_blocks.append(block_id)
+    await state.update_data(selected_blocks=selected_blocks)
+
+    list_pb = await repo_block.select_all()
+    page = 0  # Начальная страница
+    page_size = 20
+
+    total_pages = (len(list_pb) + page_size - 1) // page_size
+    start_idx = page * page_size
+    end_idx = start_idx + page_size
+    current_page_pb = list_pb[start_idx:end_idx]
+
+    kb = InlineKeyboardBuilder()
+    for pb in current_page_pb:
+        btn = InlineKeyboardButton(
+            text=f"{pb.name}", callback_data=f"select_block_{pb.id}"
+        )
+        kb.row(btn)
+
+    if total_pages > 1:
+        if page > 0:
+            btn_prev = InlineKeyboardButton(
+                text="<< Назад", callback_data=f"blocks_{page-1}"
+            )
+            kb.row(btn_prev)
+        if page < total_pages - 1:
+            btn_next = InlineKeyboardButton(
+                text="Вперед >>", callback_data=f"blocks_{page+1}"
+            )
+            kb.row(btn_next)
+
+    btn_done = InlineKeyboardButton(
+        text="Готово", callback_data="done_selecting_blocks"
+    )
+    btn_back = InlineKeyboardButton(text="Назад", callback_data="publication_schedule")
+    kb.row(btn_done)
+    kb.row(btn_back)
+
+    await callback_query.message.edit_text(
+        "Выберите блок(и):", reply_markup=kb.as_markup()
+    )
+    await state.set_state(AddTime.tb)
+
+
+@publication_schedule_router.callback_query(F.data == "done_selecting_blocks")
+@check_permission("add_time")
+async def publication_data(callback_query: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    await state.clear()
-    await repo.add(data.get("time"), data.get("tb"), AddTime.today)
+    selected_blocks = data.get("selected_blocks", [])
+    time = data.get("time")
+
+    # Объединяем выбранные блоки в одну строку через запятую
+    selected_blocks_str = ",".join(selected_blocks)
+
+    await repo.add(time, selected_blocks_str, AddTime.today)
 
     kb = InlineKeyboardBuilder()
     btn_back = InlineKeyboardButton(text="Назад", callback_data="publication_schedule")
     kb.row(btn_back)
 
-    await callback_query.message.edit_text(
-        f"Вы установили ТБ {data.get('tb')} на {data.get('time')}",
-        reply_markup=kb.as_markup(),
-    )
+    # Проверка, изменилось ли содержимое или клавиатура
+    current_text = callback_query.message.text
+    current_reply_markup = callback_query.message.reply_markup
+    new_text = f"Вы установили ТБ {selected_blocks_str} на {time}"
+    new_reply_markup = kb.as_markup()
+
+    if current_text != new_text or current_reply_markup != new_reply_markup:
+        await callback_query.message.edit_text(new_text, reply_markup=new_reply_markup)
+
+    await state.clear()

@@ -79,11 +79,15 @@ class CreateKeyboard:
         btn_change_description = InlineKeyboardButton(
             text="Изменить описание", callback_data=f"changetb_description_{name}"
         )
+        btn_change_backtime = InlineKeyboardButton(
+            text="Изменить время поиска", callback_data=f"changetb_timeback_{name}"
+        )
         btn_back = InlineKeyboardButton(text="Назад", callback_data="thematic_blocks")
 
         kb.row(btn_change_name)
         kb.row(btn_change_source)
         kb.row(btn_change_description)
+        kb.row(btn_change_backtime)
         kb.row(btn_back)
 
         keyboard = kb.as_markup()

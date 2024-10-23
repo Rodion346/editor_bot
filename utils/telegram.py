@@ -127,26 +127,38 @@ async def select_best_match(desc, messages, ignore_duplicates=False):
 
 async def copy_posts(client, messages, target_chat_id, desc, ignore_duplicates=False):
     if isinstance(desc, list):
+        best_match = None
+        best_ratio = 0
+        chat = 0
         for item in desc:
-            best_match, best_ratio, chat = await select_best_match(
+            match, ratio, chat_id = await select_best_match(
                 item, messages, ignore_duplicates
             )
-            if best_match and best_ratio >= 0.6:
-                try:
-                    target_chat = await client.get_entity(target_chat_id)
-                    logger.info(f"Target chat details: {target_chat}")
-                    await repo_art.add(best_match.id, chat, best_match.text)
-                    logger.info(f"Added message {best_match.id} to repository.")
-                    await client.send_message(target_chat, best_match.text)
-                    logger.info(f"Copied post {best_match.id} to {target_chat_id}")
-                    break
-                except Exception as e:
-                    logger.error(f"Error copying post {best_match.id}: {e}")
+            if ratio >= 0.85:
+                best_match = match
+                best_ratio = ratio
+                chat = chat_id
+                break
+            elif ratio > best_ratio and ratio >= 0.65:
+                best_match = match
+                best_ratio = ratio
+                chat = chat_id
+
+        if best_match and best_ratio >= 0.65:
+            try:
+                target_chat = await client.get_entity(target_chat_id)
+                logger.info(f"Target chat details: {target_chat}")
+                await repo_art.add(best_match.id, chat, best_match.text)
+                logger.info(f"Added message {best_match.id} to repository.")
+                await client.send_message(target_chat, best_match.text)
+                logger.info(f"Copied post {best_match.id} to {target_chat_id}")
+            except Exception as e:
+                logger.error(f"Error copying post {best_match.id}: {e}")
     else:
         best_match, best_ratio, chat = await select_best_match(
             desc, messages, ignore_duplicates
         )
-        if best_match and best_ratio >= 0.6:
+        if best_match and best_ratio >= 0.65:
             try:
                 target_chat = await client.get_entity(target_chat_id)
                 logger.info(f"Target chat details: {target_chat}")
