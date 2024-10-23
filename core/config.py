@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     )
     db: DatabaseConfig
     su: AdmConfig
+    channel__link: int
 
 
 settings = Settings()

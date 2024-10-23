@@ -7,7 +7,7 @@ from apscheduler.triggers.cron import CronTrigger
 from core.repositories.event import EventRepository
 from core.repositories.publication import PublicationRepository
 from .telegram import main
-from .events import main
+from .events import main as main_ev
 
 repo = PublicationRepository()
 repo_ev = EventRepository()
@@ -43,7 +43,7 @@ async def schedule_tasks():
         trigger = CronTrigger(hour=hour, minute=minute)
         job_id = f"event_{event.id}"
         if not scheduler.get_job(job_id):
-            scheduler.add_job(main, trigger=trigger, id=job_id, args=[event.id])
+            scheduler.add_job(main_ev, trigger=trigger, id=job_id, args=[event.id])
 
 
 async def update_scheduler():
