@@ -8,6 +8,7 @@ from telethon.sync import TelegramClient
 from core.config import settings
 from core.repositories.thematic_block import ThematicBlockRepository
 from core.repositories.article import ArticleRepository
+from utils.rerate import main_rer
 
 model = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
 # Настройка логирования
@@ -134,23 +135,23 @@ async def copy_posts(client, messages, target_chat_id, desc, ignore_duplicates=F
             match, ratio, chat_id = await select_best_match(
                 item, messages, ignore_duplicates
             )
-            if ratio >= 0.85:
+            if ratio >= 0.80:
                 best_match = match
                 best_ratio = ratio
                 chat = chat_id
                 break
-            elif ratio > best_ratio and ratio >= 0.65:
+            elif ratio > best_ratio and ratio >= 0.60:
                 best_match = match
                 best_ratio = ratio
                 chat = chat_id
 
-        if best_match and best_ratio >= 0.65:
+        if best_match and best_ratio >= 0.60:
             try:
                 target_chat = await client.get_entity(target_chat_id)
                 logger.info(f"Target chat details: {target_chat}")
                 await repo_art.add(best_match.id, chat, best_match.text)
                 logger.info(f"Added message {best_match.id} to repository.")
-                await client.send_message(target_chat, best_match.text)
+                await main_rer(best_match, target_chat, client)
                 logger.info(f"Copied post {best_match.id} to {target_chat_id}")
             except Exception as e:
                 logger.error(f"Error copying post {best_match.id}: {e}")
@@ -158,13 +159,13 @@ async def copy_posts(client, messages, target_chat_id, desc, ignore_duplicates=F
         best_match, best_ratio, chat = await select_best_match(
             desc, messages, ignore_duplicates
         )
-        if best_match and best_ratio >= 0.65:
+        if best_match and best_ratio >= 0.60:
             try:
                 target_chat = await client.get_entity(target_chat_id)
                 logger.info(f"Target chat details: {target_chat}")
                 await repo_art.add(best_match.id, chat, best_match.text)
                 logger.info(f"Added message {best_match.id} to repository.")
-                await client.send_message(target_chat, best_match.text)
+                await main_rer(best_match, target_chat, client)
                 logger.info(f"Copied post {best_match.id} to {target_chat_id}")
             except Exception as e:
                 logger.error(f"Error copying post {best_match.id}: {e}")
